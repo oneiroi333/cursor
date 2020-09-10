@@ -21,7 +21,7 @@ main(int argc, char *argv[])
 	int err;
 	struct binary *bin;
 	struct section *text_sec;
-	uint8_t *pc;
+	const uint8_t *pc;
 	uint64_t addr;
 	size_t size;
 
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 exit:
 	if (cs_h) cs_close(&cs_h);
 	if (bin) binary_unload(bin);
-	if (ins) cs_free(ins);
+	if (ins) cs_free(ins, 1);
 
 	return err;
 }
@@ -79,6 +79,8 @@ void
 print_ins(cs_insn *ins)
 {
 #define X86_INS_MAX_BYTES 15
+
+	size_t i, j;
 
 	printf("0x%"PRIx64":\t", ins[i].address);
 	for (j = 0; j < X86_INS_MAX_BYTES + 1; ++j) {

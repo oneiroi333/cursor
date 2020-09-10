@@ -1,5 +1,5 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 
 #define EQUEUEFULL 1
 
@@ -56,4 +56,4 @@ int queue_enqueue(struct queue *queue, struct queue_node *node);
  */
 struct queue_node *queue_dequeue(struct queue *queue);
 
-#endif /* QUEUE_H */
+#endif /* __QUEUE_H__ */

@@ -2,7 +2,7 @@
 ==================[ cursor ]===================  
 ||                                           ||  
 ||                                           ||  
-||          A reCURsive disassemblOR         ||  
+||          A reCURSive disassemblOR         ||  
 ||                                           ||  
 ||                                           ||  
 ==================[ cursor ]===================

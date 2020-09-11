@@ -31,11 +31,7 @@ main(int argc, char *argv[])
 	uint64_t addr, offset, target;
 	size_t size;
 	struct queue *addrs_to_disasm;
-
-	// TODO: use a dynamic data structure u lazy baboon
-#define ADDR_SEEN_MAX 1000
-	uint64_t addrs_seen[ADDR_SEEN_MAX] = {0};
-	int addrs_seen_end = 0;
+	struct llist *addrs_seen;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s <binary>\n", argv[0]);
@@ -89,14 +85,11 @@ main(int argc, char *argv[])
 	while(!queue_empty(addrs_to_disasm)) {
 		addr = (uint64_t)queue_dequeue(addrs_to_disasm);
 		/* Skip already disassembled adresses */
-		// TODO
-		/*
-		for (int i = 0; i < addrs_seen_end; ++i) {
-			if (addr == addrs_seen[i]) {
-				continue;
-			}
+		if (addrs_seen == NULL) {
+			addrs_seen = llist_init((void *)addr);
+		} else {
+			llist_append(addrs_seen, (void *)addr);
 		}
-		*/
 
 		offset = addr - text_sec->vma;
 		pc = text_sec->bytes + offset;
@@ -109,19 +102,13 @@ main(int argc, char *argv[])
 			/* Check/handle control flow instruction */
 			if (is_cflow_ins(ins)) {
 				target = get_ins_immediate_target(ins);
-				if (target && binary_sec_contains_addr(text_sec, target)) {
-					/* Skip already disassembled target/adress */
-					// TODO
-					
+				/* If the target is legit and not processed yet, add it to the queue */
+				if (target &&
+					binary_sec_contains_addr(text_sec, target) &&
+					!llist_search(addrs_seen, (void *)target, search_addrs_seen, NULL)) {
+						queue_enqueue(addrs_to_disasm, (void *)target);
 				}
 			}
-			/*
-			addrs_seen[addrs_seen_end] = addr;
-			if (++addrs_seen_end == ADDRS_SEEN_MAX) {
-				printf("FATALITY!!! Increase ADDRS_SEEN_MAX and/or blame dev\n");
-				break;
-			}
-			*/
 		} 
 	}
 	queue_destroy(addrs_to_disasm, NULL, NULL);
@@ -134,7 +121,7 @@ exit:
 	return err;
 }
 
-static void
+static void *
 enqueue_addr_to_disasm(void *ctx, void *symbol)
 {
 	struct binary *bin;
@@ -152,6 +139,13 @@ enqueue_addr_to_disasm(void *ctx, void *symbol)
 	if (sym->type == SYM_TYPE_FUNC && sec && binary_sec_contains_addr(sec, sym->addr)) {
 		queue_enqueue(queue, (void *)sym->addr);
 	}
+	return NULL;
+}
+
+static void *
+search_addrs_seen(void *addr, void *data)
+{
+	return (addr == data);
 }
 
 static void

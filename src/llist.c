@@ -120,3 +120,18 @@ llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_trav)
 		llist = llist->next;
 	}
 }
+
+int
+llist_search(struct llist *llist, void *data_func_ctx, data_func_t data_search, void **res)
+{
+	while(llist) {
+		if (data_search(data_func_ctx, llist->data)) {
+			if (res != NULL) {
+				*res = llist->data;
+			}
+			return 1;
+		}
+		llist = llist->next;
+	}
+	return 0;
+}

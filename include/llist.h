@@ -10,8 +10,10 @@ enum llist_error {
  * @params:
  * 	context: function context
  *	data: node data
+ * @returns:
+ *	generic return value
  */
-typedef void (*data_func_t)(void *context, void *data);
+typedef void *(*data_func_t)(void *context, void *data);
 
 struct llist {
 	void *data;
@@ -90,5 +92,19 @@ struct llist *llist_rem_by_idx(struct llist *llist, int idx, void **data);
  * 	-
  */
 void llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_trav);
+
+/*
+ * Search the linked list. Search stops when data_search returns non-zero value
+ *
+ * @params:
+ * 	llist: pointer to linked list
+ *  data_func_ctx: context information for data_search
+ * 	data_search: function to call on every node
+ * 	res: (optional) address of pointer where search result gets stored. ignored if NULL
+ * @returns:
+ *  0: not found
+ *  1: found (data is stored in **res (if not NULL))
+ */
+int llist_search(struct llist *llist, void *data_func_ctx, data_func_t data_search, void **res);
 
 #endif /* __LLIST__ */

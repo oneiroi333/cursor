@@ -86,4 +86,17 @@ void binary_unload(struct binary *bin);
  */
 struct section *binary_get_section_by_name(struct binary *bin, char *name);
 
+
+/*
+ * Check if a section contains an addr
+ *
+ * @params:
+ * 	sec: section
+ * 	addr: address
+ * @returns:
+ * 	1: true
+ * 	0: false
+ */
+int binary_sec_contains_addr(struct section *sec, uint64_t addr);
+
 #endif /* __BINLOAD__ */

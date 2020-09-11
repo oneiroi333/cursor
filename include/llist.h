@@ -6,9 +6,12 @@ enum llist_error {
 };
 
 /*
- * Data destructor function
+ * Functions that operate on node data
+ * @params:
+ * 	context: function context
+ *	data: node data
  */
-typedef void (*data_dtor_t)(void *data);
+typedef void (*data_func_t)(void *context, void *data);
 
 struct llist {
 	void *data;
@@ -30,11 +33,12 @@ struct llist *llist_init(void *data);
  *
  * @params:
  * 	llist: linked list to destroy
+ *  data_func_ctx: context information for data_dtor
  * 	data_dtor: Data destructor function which gets called for every llist node
  * @returns;
  * 	-
  */
-void llist_destroy(struct llist *llist, data_dtor_t data_dtor);
+void llist_destroy(struct llist *llist, void *data_func_ctx, data_func_t data_dtor);
 
 /*
  * Append a new node to a linked list
@@ -74,5 +78,17 @@ struct llist *llist_get_by_idx(struct llist *llist, int idx);
  * 	pointer to new linked list head
  */
 struct llist *llist_rem_by_idx(struct llist *llist, int idx, void **data);
+
+/*
+ * Traverse the linked list and call data_trav for every node
+ *
+ * @params:
+ * 	llist: pointer to linked list where node is to remove
+ *  data_func_ctx: context information for data_trav
+ * 	data_trav: function to call on every node
+ * @returns:
+ * 	-
+ */
+void llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_trav);
 
 #endif /* __LLIST__ */

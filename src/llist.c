@@ -10,14 +10,14 @@ llist_init(void *data)
 }
 
 void
-llist_destroy(struct llist *llist, data_dtor_t data_dtor)
+llist_destroy(struct llist *llist, void *data_func_ctx, data_func_t data_dtor)
 {
 	void *data;
 
 	while (llist != NULL) {
 		llist = llist_rem_by_idx(llist, 0, &data);
 		if (data_dtor) {
-			data_dtor(data);
+			data_dtor(data_func_ctx, data);
 		}
 	}
 }
@@ -110,4 +110,13 @@ llist_node_init(void *data)
 		llist->next = NULL;
 	}
 	return llist;
+}
+
+void
+llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_trav)
+{
+	while(llist) {
+		data_trav(data_func_ctx, llist->data);
+		llist = llist->next;
+	}
 }

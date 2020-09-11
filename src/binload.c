@@ -21,8 +21,8 @@ static struct symbol *symbol_init(void);
 static void binary_destroy(struct binary *bin);
 static void section_destroy(struct section *sec);
 static void symbol_destroy(struct symbol *sym);
-static void llist_sec_dtor(void *data);
-static void llist_sym_dtor(void *data);
+static void llist_sec_dtor(void *ctx, void *data);
+static void llist_sym_dtor(void *ctx, void *data);
 static void sym_set_type(asymbol *bfd_sym, struct symbol *sym);
 
 struct binary *
@@ -116,6 +116,15 @@ binary_get_section_by_name(struct binary *bin, char *name)
 	}
 	return NULL;
 }
+
+int
+binary_sec_contains_addr(struct section *sec, uint64_t addr)
+{
+	return (addr >= sec->vma && addr < (sec->vma + sec->size));
+}
+
+
+/* Private functions */
 
 static bfd *
 open_bfd(char *fname)
@@ -275,7 +284,7 @@ sym_set_type(asymbol *bfd_sym, struct symbol *sym)
 		sym->type = SYM_TYPE_LOCAL;
 	} else if (bfd_sym->flags & BSF_GLOBAL) {
 		sym->type = SYM_TYPE_GLOBAL;
-	} else if (bfd_sym->flags & BSF_GLOBAL) {
+	} else if (bfd_sym->flags & BSF_DYNAMIC) {
 		sym->type = SYM_TYPE_DYNAMIC;
 	}
 }
@@ -304,8 +313,8 @@ binary_destroy(struct binary *bin)
 	if (bin->name) free(bin->name);
 	if (bin->type_str) free(bin->type_str);
 	if (bin->arch_str) free(bin->arch_str);
-	llist_destroy(bin->sections, llist_sec_dtor);
-	llist_destroy(bin->symbols, llist_sym_dtor);
+	llist_destroy(bin->sections, NULL, llist_sec_dtor);
+	llist_destroy(bin->symbols, NULL, llist_sym_dtor);
 	free(bin);
 }
 
@@ -325,13 +334,13 @@ symbol_destroy(struct symbol *sym)
 }
 
 static void
-llist_sec_dtor(void *data)
+llist_sec_dtor(void *ctx, void *data)
 {
 	section_destroy((struct section *) data);
 }
 
 static void
-llist_sym_dtor(void *data)
+llist_sym_dtor(void *ctx, void *data)
 {
 	symbol_destroy((struct symbol *) data);
 }

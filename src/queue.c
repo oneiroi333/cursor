@@ -1,6 +1,22 @@
 #include <stdlib.h>
 #include "queue.h"
 
+struct queue_node {
+	void *data;
+	struct queue_node *next;
+};
+
+/*
+ * Create a new queue node
+ */
+static struct queue_node *queue_node_init(void *data);
+
+/*
+ * Destroy a queue node
+ */
+static void queue_node_destroy(struct queue_node *node);
+
+
 struct queue *
 queue_init(const unsigned int max_size)
 {
@@ -17,14 +33,14 @@ queue_init(const unsigned int max_size)
 }
 
 void
-queue_destroy(struct queue *queue, fn_node_data_destroy fn)
+queue_destroy(struct queue *queue, void *data_func_ctx, data_func_t data_dtor)
 {
 	struct queue_node *node = queue->head;
 	struct queue_node **node_next = &node->next;
 
 	while (node != NULL) {
-		if (fn != NULL) {
-			fn(node->data);
+		if (data_dtor != NULL) {
+			data_dtor(data_func_ctx, node->data);
 		}
 		free(node);
 		node = *node_next;
@@ -32,50 +48,37 @@ queue_destroy(struct queue *queue, fn_node_data_destroy fn)
 	}
 }
 
-struct queue_node *
-queue_node_init(void *data, fn_node_data_init fn)
-{
-	struct queue_node *node = (struct queue_node *) malloc(sizeof(*node));
-	
-	if (node) {
-		if (fn != NULL) {
-			node->data = fn();
-		} else {
-			node->data = data;
-		}
-		node->next = NULL;
-
-		return node;
-	}
-	return NULL;
-}
-
-void
-queue_node_destroy(struct queue_node *node, fn_node_data_destroy fn)
-{
-	if (fn != NULL) {
-		fn(node->data);
-	}
-	free(node);
-}
-
 int
-queue_enqueue(struct queue *queue, struct queue_node *node)
+queue_enqueue(struct queue *queue, void *data)
 {
+	struct queue_node *node;
+
 	if (queue->max_size > 0 && queue->size == queue->max_size) {
-		return -EQUEUEFULL;
+		return -EQFULL;
 	}
-	queue->tail->next = node;
+
+	node = queue_node_init(data);
+	if (!node) {
+		return -ENOMEM;
+	}
+	if (queue->size > 0) {
+		queue->tail->next = node;
+	} else {
+		queue->head = node;
+	}
 	queue->tail = node;
 	queue->size++;
 
-	return 0;
+	return -ENOERR;
 }
 
-struct queue_node *
+#include <stdio.h>
+
+void *
 queue_dequeue(struct queue *queue)
 {
 	struct queue_node *node;
+	void *data;
 
 	if (queue->size == 0) {
 		return NULL;
@@ -84,5 +87,40 @@ queue_dequeue(struct queue *queue)
 	queue->head = queue->head->next;
 	queue->size--;
 
-	return node;
+	data = node->data;
+	queue_node_destroy(node);
+
+	return data;
+}
+
+int
+queue_empty(struct queue *queue)
+{
+	return (queue->size == 0);
+}
+
+/*****************************/
+/*          Private          */
+/*****************************/
+
+static
+struct queue_node *
+queue_node_init(void *data)
+{
+	struct queue_node *node = (struct queue_node *) malloc(sizeof(*node));
+	
+	if (node) {
+		node->data = data;
+		node->next = NULL;
+
+		return node;
+	}
+	return NULL;
+}
+
+static
+void
+queue_node_destroy(struct queue_node *node)
+{
+	free(node);
 }

@@ -33,7 +33,7 @@ queue_init(const unsigned int max_size)
 }
 
 void
-queue_destroy(struct queue *queue, void *data_func_ctx, data_func_t data_dtor)
+queue_destroy(struct queue *queue, void *data_func_ctx, queue_data_func_t data_dtor)
 {
 	struct queue_node *node = queue->head;
 	struct queue_node **node_next = &node->next;

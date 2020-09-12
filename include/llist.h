@@ -13,7 +13,7 @@ enum llist_error {
  * @returns:
  *	generic return value
  */
-typedef void *(*data_func_t)(void *context, void *data);
+typedef void *(*llist_data_func_t)(void *context, void *data);
 
 struct llist {
 	void *data;
@@ -40,7 +40,7 @@ struct llist *llist_init(void *data);
  * @returns;
  * 	-
  */
-void llist_destroy(struct llist *llist, void *data_func_ctx, data_func_t data_dtor);
+void llist_destroy(struct llist *llist, void *data_func_ctx, llist_data_func_t data_dtor);
 
 /*
  * Append a new node to a linked list
@@ -91,7 +91,7 @@ struct llist *llist_rem_by_idx(struct llist *llist, int idx, void **data);
  * @returns:
  * 	-
  */
-void llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_trav);
+void llist_traverse(struct llist *llist, void *data_func_ctx, llist_data_func_t data_trav);
 
 /*
  * Search the linked list. Search stops when data_search returns non-zero value
@@ -105,6 +105,6 @@ void llist_traverse(struct llist *llist, void *data_func_ctx, data_func_t data_t
  *  0: not found
  *  1: found (data is stored in **res (if not NULL))
  */
-int llist_search(struct llist *llist, void *data_func_ctx, data_func_t data_search, void **res);
+int llist_search(struct llist *llist, void *data_func_ctx, llist_data_func_t data_search, void **res);
 
 #endif /* __LLIST__ */

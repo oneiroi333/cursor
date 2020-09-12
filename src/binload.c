@@ -21,8 +21,8 @@ static struct symbol *symbol_init(void);
 static void binary_destroy(struct binary *bin);
 static void section_destroy(struct section *sec);
 static void symbol_destroy(struct symbol *sym);
-static void llist_sec_dtor(void *ctx, void *data);
-static void llist_sym_dtor(void *ctx, void *data);
+static void *llist_sec_dtor(void *ctx, void *data);
+static void *llist_sym_dtor(void *ctx, void *data);
 static void sym_set_type(asymbol *bfd_sym, struct symbol *sym);
 
 struct binary *
@@ -333,14 +333,16 @@ symbol_destroy(struct symbol *sym)
 	free(sym);
 }
 
-static void
+static void *
 llist_sec_dtor(void *ctx, void *data)
 {
 	section_destroy((struct section *) data);
+	return NULL;
 }
 
-static void
+static void *
 llist_sym_dtor(void *ctx, void *data)
 {
 	symbol_destroy((struct symbol *) data);
+	return NULL;
 }

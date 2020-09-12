@@ -17,7 +17,12 @@ struct _ctx {
 };
 
 static void print_ins(cs_insn *ins);
-static void enqueue_addr_to_disasm(void *addrs_to_disasm, void *data);
+static void *enqueue_addr_to_disasm(void *addrs_to_disasm, void *data);
+static void *search_addrs_seen(void *addr, void *data);
+static int is_cflow_group(uint8_t group);
+static int is_cflow_ins(cs_insn *ins);
+static int is_unconditional_cflow_ins(cs_insn *ins);
+static uint64_t get_ins_immediate_target(cs_insn *ins);
 
 int
 main(int argc, char *argv[])
@@ -84,7 +89,7 @@ main(int argc, char *argv[])
 	addrs_seen = NULL;
 	while(!queue_empty(addrs_to_disasm)) {
 		addr = (uint64_t)queue_dequeue(addrs_to_disasm);
-		/* Skip already disassembled adresses */
+		/* Add addr to already disassembled adresses */
 		if (addrs_seen == NULL) {
 			addrs_seen = llist_init((void *)addr);
 		} else {
@@ -108,8 +113,16 @@ main(int argc, char *argv[])
 					!llist_search(addrs_seen, (void *)target, search_addrs_seen, NULL)) {
 						queue_enqueue(addrs_to_disasm, (void *)target);
 				}
+				if (is_unconditional_cflow_ins(ins)) {
+					break;
+				}
+			} else {
+				if (ins->id == X86_INS_HLT) {
+					break;
+				}
 			}
 		} 
+		printf("---------------------------------------------\n");
 	}
 	queue_destroy(addrs_to_disasm, NULL, NULL);
 
@@ -145,7 +158,7 @@ enqueue_addr_to_disasm(void *ctx, void *symbol)
 static void *
 search_addrs_seen(void *addr, void *data)
 {
-	return (addr == data);
+	return (addr == data ? (void *)1 : (void *)0);
 }
 
 static void
@@ -165,4 +178,55 @@ print_ins(cs_insn *ins)
 	}
 	printf("\t%s", ins[i].mnemonic);
 	printf("\t%s\n", ins[i].op_str);
+}
+
+static int
+is_cflow_group(uint8_t grp)
+{
+	return (grp == CS_GRP_JUMP) || (grp == CS_GRP_CALL)
+			|| (grp == CS_GRP_RET) || (grp == CS_GRP_IRET);
+}
+
+static int
+is_cflow_ins(cs_insn *ins)
+{
+	for (int i = 0; i < ins->detail->groups_count; ++i) {
+		if (is_cflow_group(ins->detail->groups[i])) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int
+is_unconditional_cflow_ins(cs_insn *ins)
+{
+	switch(ins->id) {
+	case X86_INS_JMP:
+	case X86_INS_LJMP:
+	case X86_INS_RET:
+	case X86_INS_RETF:
+	case X86_INS_RETFQ:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static uint64_t
+get_ins_immediate_target(cs_insn *ins)
+{
+	cs_x86_op *cs_op;
+
+	for (size_t i = 0; i < ins->detail->groups_count; ++i) {
+		if (is_cflow_group(ins->detail->groups[i])) {
+			for (size_t j = 0; j < ins->detail->x86.op_count; ++j) {
+				cs_op = &ins->detail->x86.operands[j];
+				if (cs_op->type == X86_OP_IMM) {
+					return cs_op->imm;
+				}
+			}
+		}
+	}
+	return 0;
 }

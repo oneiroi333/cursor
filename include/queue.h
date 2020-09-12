@@ -5,7 +5,7 @@
 #define EQFULL	1
 #define ENOMEM	2
 
-typedef void (*data_func_t) (void *data_func_ctx, void *data);
+typedef void (*queue_data_func_t) (void *data_func_ctx, void *data);
 
 struct queue {
 	unsigned int max_size;
@@ -25,7 +25,7 @@ struct queue *queue_init(const unsigned int max_size);
  * Destroy an existing queue object
  * 
  */
-void queue_destroy(struct queue *queue, void *data_func_ctx, data_func_t data_dtor);
+void queue_destroy(struct queue *queue, void *data_func_ctx, queue_data_func_t data_dtor);
 
 /*
  * Add queue node to queue

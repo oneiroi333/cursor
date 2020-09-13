@@ -30,11 +30,11 @@ main(int argc, char *argv[])
 	csh cs_h;
 	cs_insn *ins;
 	int err;
-	struct binary *bin;
-	struct section *text_sec;
 	const uint8_t *pc;
 	uint64_t addr, offset, target;
 	size_t size;
+	struct binary *bin;
+	struct section *text_sec;
 	struct queue *addrs_to_disasm;
 	struct llist *addrs_seen;
 
@@ -89,6 +89,10 @@ main(int argc, char *argv[])
 	addrs_seen = NULL;
 	while(!queue_empty(addrs_to_disasm)) {
 		addr = (uint64_t)queue_dequeue(addrs_to_disasm);
+		/* Skip already disasm addr */
+		if (llist_search(addrs_seen, (void *)addr, search_addrs_seen, NULL)) {
+			continue;
+		}
 		/* Add addr to already disassembled adresses */
 		if (addrs_seen == NULL) {
 			addrs_seen = llist_init((void *)addr);
@@ -158,7 +162,7 @@ enqueue_addr_to_disasm(void *ctx, void *symbol)
 static void *
 search_addrs_seen(void *addr, void *data)
 {
-	return (addr == data ? (void *)1 : (void *)0);
+	return ((uint64_t)addr == (uint64_t)data ? (void *)1 : (void *)0);
 }
 
 static void

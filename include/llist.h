@@ -2,7 +2,7 @@
 #define __LLIST__
 
 enum llist_error {
-	ENOMEM
+	LLIST_ENOMEM
 };
 
 /*

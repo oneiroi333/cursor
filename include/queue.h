@@ -1,9 +1,9 @@
 #ifndef __QUEUE_H__
 #define __QUEUE_H__
 
-#define ENOERR	0
-#define EQFULL	1
-#define ENOMEM	2
+#define QUEUE_ENOERR	0
+#define QUEUE_EQFULL	1
+#define QUEUE_ENOMEM	2
 
 typedef void (*queue_data_func_t) (void *data_func_ctx, void *data);
 

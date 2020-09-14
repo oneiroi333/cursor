@@ -54,12 +54,12 @@ queue_enqueue(struct queue *queue, void *data)
 	struct queue_node *node;
 
 	if (queue->max_size > 0 && queue->size == queue->max_size) {
-		return -EQFULL;
+		return QUEUE_EQFULL;
 	}
 
 	node = queue_node_init(data);
 	if (!node) {
-		return -ENOMEM;
+		return QUEUE_ENOMEM;
 	}
 	if (queue->size > 0) {
 		queue->tail->next = node;
@@ -69,7 +69,7 @@ queue_enqueue(struct queue *queue, void *data)
 	queue->tail = node;
 	queue->size++;
 
-	return -ENOERR;
+	return QUEUE_ENOERR;
 }
 
 #include <stdio.h>

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <capstone/capstone.h>
 #include "binload.h"
 #include "queue.h"
@@ -31,7 +33,7 @@ main(int argc, char *argv[])
 	cs_insn *ins;
 	int err;
 	const uint8_t *pc;
-	uint64_t addr, offset, target;
+	uint64_t addr, offset, target, entry_addr;
 	size_t size;
 	struct binary *bin;
 	struct section *text_sec;
@@ -39,8 +41,18 @@ main(int argc, char *argv[])
 	struct llist *addrs_seen;
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <binary>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <binary> [<entry_addr>]\n", argv[0]);
 		return 1;
+	}
+	
+	errno = 0;
+	entry_addr = 0;
+	if (argc == 3) {
+		entry_addr = strtoull(argv[2], NULL, 16);
+		if (errno == EINVAL) {
+			fprintf(stderr, "Usage: %s <binary> [<entry_addr>]\n", argv[0]);
+			return 2;
+		}
 	}
 
 	err = 0;
@@ -76,14 +88,21 @@ main(int argc, char *argv[])
 
 	/* Create queue */
 	addrs_to_disasm = queue_init(0);
-	/* Add binary entry address */
-	queue_enqueue(addrs_to_disasm, (void *)bin->entry);
-	/* Add all symbol addresses */
-	struct _ctx ctx = {
-		.bin = bin,
-		.queue = addrs_to_disasm
-	};
-	llist_traverse(bin->symbols, (void *)&ctx, enqueue_addr_to_disasm);
+	/* Add entry address */
+	if (entry_addr) {
+		queue_enqueue(addrs_to_disasm, (void *)entry_addr);
+	} else {
+		queue_enqueue(addrs_to_disasm, (void *)bin->entry);
+	}
+	/* If an entry addr was given manually we ignore the symbols */
+	if (!entry_addr) {
+		/* Add all symbol addresses */
+		struct _ctx ctx = {
+			.bin = bin,
+			.queue = addrs_to_disasm
+		};
+		llist_traverse(bin->symbols, (void *)&ctx, enqueue_addr_to_disasm);
+	}
 
 	/* Start disassembling */
 	addrs_seen = NULL;

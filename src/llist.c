@@ -34,7 +34,7 @@ llist_append(struct llist *llist, void *data)
 		for (node = llist; node->next != NULL; node = node->next);
 		node->next = new;
 	} else {
-		err = ENOMEM;
+		err = LLIST_ENOMEM;
 	}
 	return err;
 }
